@@ -24,11 +24,12 @@ The goals / steps of this project are the following:
 [hist_test]: ./images/Hist_test.png 'Histogram of Test Data'
 [image1]: ./images/Normal_ex1.png 'Visualization'
 [image_gray1]: ./images/Gray_ex1.png 'Grayscaling'
-[image_clahe1]: ./images/CLAHE_ex1.png 
+[image_clahe1]: ./images/CLAHE_ex1.png
 [image_rotated1]: ./images/Rotated_ex1.png 'Random Noise'
-[image4]: ./Web/arrow-points-up.jpg  'Traffic Sign 1'
-[image5]: ./Web/caution.jpg  'Traffic Sign 2'
+[image4]: ./Web/arrow-points-up.jpg 'Traffic Sign 1'
+[image5]: ./Web/caution.jpg 'Traffic Sign 2'
 [image6]: ./Web/70kmh.jpg 'Traffic Sign 3'
+
 [image7]: ./Web/pedestrians.jpg'Traffic Sign 4'
 [image8]: ./Web/Road_Work.jpg 'Traffic Sign 5'
 
@@ -127,7 +128,6 @@ Here is an example of an original image and an augmented rotated image:
 
 After augmenting the data with 30000 new images the histogram was more even as shown in the figure on the right below:
 
-
 ![Histogram of train data][hist_data] ![Histogram Augmented][hist_aug]
 
 ## Pre-Processing the Images
@@ -152,42 +152,47 @@ I decided to generate additional data because it helps on optimizations.
 
 My final model consisted of the following layers:
 
-|      Layer      |                  Description                   |
-| :-------------: | :--------------------------------------------: |
-|      Input      |            32x32x1 Grayscale image             |
-| Convolution 5x5 |   1x1 stride, valid padding, outputs 28x28x32   |
-|      RELU       |                                                |
-|   Max pooling   |          2x2 stride, outputs 14x14x32          |
-| Convolution 5x5 |   1x1 stride, valid padding, outputs 10x10x64   |
-|      RELU       |                                                |
-|   Max pooling   |           2x2 stride, outputs 5x5x64           |
-| Convolution 5x5 |   1x1 stride, same padding, outputs 5x5x128    |
-|      RELU                |                                                                         	|
-|   Max pooling    |          2x2 stride, outputs 3x3x128           |
-| Flatten                  | Conv1+Conv2+Conv3 size=9024  |
-| Fully connected |		   Input  9024 Output 3000 |
-| Fully connected |             Input 3000 Output 400              |
-| Fully connected |              Input 400 Output 120              |
-| Fully connected |              Input 120 Output 84               |
-| Fully connected |               Input 84 Output 43               |
-|     Softmax     |      Softmax_cross_entropy_with_logits_v2      |
-|                 |                                                |
-|                 |                                                |
+|      Layer      |                 Description                 |
+| :-------------: | :-----------------------------------------: |
+|      Input      |           32x32x1 Grayscale image           |
+| Convolution 5x5 | 1x1 stride, valid padding, outputs 28x28x32 |
+|      RELU       |                                             |
+|   Max pooling   |        2x2 stride, outputs 14x14x32         |
+| Convolution 5x5 | 1x1 stride, valid padding, outputs 10x10x64 |
+|      RELU       |                                             |
+|   Max pooling   |         2x2 stride, outputs 5x5x64          |
+| Convolution 5x5 |  1x1 stride, same padding, outputs 5x5x128  |
+|      RELU       |                                             |
+|   Max pooling   |         2x2 stride, outputs 3x3x128         |
+|     Flatten     |         Conv1+Conv2+Conv3 size=9024         |
+| Fully connected |           Input 9024 Output 3000            |
+| Fully connected |            Input 3000 Output 400            |
+| Fully connected |            Input 400 Output 120             |
+| Fully connected |             Input 120 Output 84             |
+| Fully connected |             Input 84 Output 43              |
+|     Softmax     |    Softmax_cross_entropy_with_logits_v2     |
+|                 |                                             |
+|                 |                                             |
 
+All of the parameters were found on an empirical basis. Several runs on training was done, and observations led to these optimal values.
 
-To train the model, I used an Adam Optimizer wuth batch size of 128 samples. We used 7 epochs on a learning rate of 0.0001. These were the best parameters tested during the development of the network.
+To train the model, I used an Adam Optimizer wuth batch size of 128 samples. We used 10 epochs on a learning rate of 0.001. These were the best parameters tested during the development of the network.
 
 My final model results were:
 
-* training set accuracy of ?
-* validation set accuracy of ?
-* test set accuracy of ?
+* training set accuracy of 99.2%
+* validation set accuracy of 98.2%
+* test set accuracy of 96.8%
 
 If an iterative approach was chosen:
 
 The first architecture was LeNet, due to the fact that it is a good neural network for image classification.
-The LeNet did not achieve the desired result, so several changes was made untill a satisfactory model delivered a good accuracy. 
-We increased the filters of the first two convolutional layers and add a third layer with 128 filters.  Dropouts layers was added to prevent overfitting.
+
+The LeNet did not achieve the desired result, so several changes was made untill a satisfactory model delivered a good accuracy.
+
+We increased the filters of the first two convolutional layers and add a third layer with 128 filters. Dropouts layers was added to prevent overfitting.
+
+It was tried several variations of the actual model, with more filters and less filter, it was added more dropouts and no droupouts at all. On a regular basis, the others models tested had an accuracuracy between 92% and 95%.
 
 ### Test a Model on New Images
 
@@ -197,77 +202,72 @@ Here are five German traffic signs that I found on the web:
 
 The images varies in size, but all have the sign on most of the image.
 
-
 Here are the results of the prediction:
 
-|     Image     |  Prediction   |
-| :-----------: | :-----------: |
-|   Pedestrians   | Pedestrians  |
-|    General caution    | General caution |
-|     Ahead Only     |    Ahead Only  |
-|   70 km/h    |  70 km/h    | 
-| Road Work | Road Work |
+|      Image      |   Prediction    |
+| :-------------: | :-------------: |
+|   Pedestrians   |   Pedestrians   |
+| General caution | General caution |
+|   Ahead Only    |   Ahead Only    |
+|     70 km/h     |     70 km/h     |
+|    Road Work    |    Road Work    |
 
-The model was able to correctly guess 5 of the 5 traffic signs, which gives an accuracy of 100%. 
+The model was able to correctly guess 5 of the 5 traffic signs, which gives an accuracy of 100%.
 
 The code for making predictions on my final model is located in the 11th cell of the Ipython notebook.
 
 For the first image, the model is relatively sure that this is a speed limit (70km/h) . The top five soft max probabilities were
 
-Speed limit (70km/h) [ 4  0  1  8 15] [0.36755636 0.1672712  0.167132   0.15353769 0.14450277]
-Pedestrians [27 26 24 22 28] [0.30931866 0.2133015  0.19082403 0.14329961 0.14325623]
-Road work [25 29 22 24 14] [0.41135165 0.20969748 0.20800371 0.12864663 0.04230047]
-General caution [18 26 27 32 22] [0.3491316  0.2236749  0.17059113 0.1292377  0.12736468]
+Speed limit (70km/h) [ 4 0 1 8 15][0.36755636 0.1672712 0.167132 0.15353769 0.14450277]
+Pedestrians [27 26 24 22 28][0.30931866 0.2133015 0.19082403 0.14329961 0.14325623]
+Road work [25 29 22 24 14][0.41135165 0.20969748 0.20800371 0.12864663 0.04230047]
+General caution [18 26 27 32 22][0.3491316 0.2236749 0.17059113 0.1292377 0.12736468]
 
-
-| Probability |  Prediction   |
-| :---------: | :-----------: |
-|     .36     |   Speed limit (70km/h)   |
-|     .16     |    No vehicles    |
-|     .16     |   Speed limit (20km/h)   |
-|     .15     |  Turn right ahead |
+| Probability |      Prediction       |
+| :---------: | :-------------------: |
+|     .36     | Speed limit (70km/h)  |
+|     .16     |      No vehicles      |
+|     .16     | Speed limit (20km/h)  |
+|     .15     |   Turn right ahead    |
 |     .14     | Speed limit (120km/h) |
-
 
 For the second image.
 
-| Probability |  Prediction   |
-| :---------: | :-----------: |
-|     .30    |   Pedestrians   |
-|     .21     |   Traffic signals |
-|     .19     |    Right-of-way at the next intersection |
-|     .14     |   General caution |
-|     .14     |  Children crossing|
+| Probability |              Prediction               |
+| :---------: | :-----------------------------------: |
+|     .30     |              Pedestrians              |
+|     .21     |            Traffic signals            |
+|     .19     | Right-of-way at the next intersection |
+|     .14     |            General caution            |
+|     .14     |           Children crossing           |
 
 For the third image.
 
-| Probability |  Prediction   |
-| :---------: | :-----------: |
-|     .41     |   Road work   |
-|     .20     |   Bicycles crossing    |
-|     .20     |   Bumpy road      |
-|     .12     |   Road narrows on the right  |
-|     .04     | Stop |
-
+| Probability |        Prediction         |
+| :---------: | :-----------------------: |
+|     .41     |         Road work         |
+|     .20     |     Bicycles crossing     |
+|     .20     |        Bumpy road         |
+|     .12     | Road narrows on the right |
+|     .04     |           Stop            |
 
 For the fourth image.
 
-| Probability |  Prediction   |
-| :---------: | :-----------: |
-|     . 34    |   General caution   |
-|     .22     |     Traffic signals   |
-|     .17     |   Pedestrians  |
-|     .12     |    End of all speed and passing limits |
-|     .12     |  Bumpy road |
+| Probability |             Prediction              |
+| :---------: | :---------------------------------: |
+|    . 34     |           General caution           |
+|     .22     |           Traffic signals           |
+|     .17     |             Pedestrians             |
+|     .12     | End of all speed and passing limits |
+|     .12     |             Bumpy road              |
 
-Ahead only [35 19  3 33 34] [0.49320123 0.14689738 0.13453919 0.1315758  0.09378643]
+Ahead only [35 19 3 33 34][0.49320123 0.14689738 0.13453919 0.1315758 0.09378643]
 For the fifth image.
 
-| Probability |  Prediction   |
-| :---------: | :-----------: |
-|     . 49    |    Ahead only  |
-|     .14     |   Dangerous curve to the left     |
-|     .13     |    Speed limit (60km/h) |
-|     .13     |    Turn right ahead |
-|     .09     |  Turn left ahead|
-
+| Probability |         Prediction          |
+| :---------: | :-------------------------: |
+|    . 49     |         Ahead only          |
+|     .14     | Dangerous curve to the left |
+|     .13     |    Speed limit (60km/h)     |
+|     .13     |      Turn right ahead       |
+|     .09     |       Turn left ahead       |
