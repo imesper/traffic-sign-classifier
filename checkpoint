@@ -1,2 +1,2 @@
-model_checkpoint_path: "trafficSignModel01"
-all_model_checkpoint_paths: "trafficSignModel01"
+model_checkpoint_path: "trafficSignModel02"
+all_model_checkpoint_paths: "trafficSignModel02"

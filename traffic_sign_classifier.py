@@ -97,7 +97,7 @@ def plotHistogram(label_data):
         classes_counts.values()), align='center')
     plt.xticks(range(len(classes_counts)), list(classes_counts.keys()))
     plt.title("Data")
-    plt.show()
+    # plt.show()
     return classes, classes_counts, n_classes
 
 
@@ -226,6 +226,7 @@ image = X_train[index].squeeze()
 from sklearn.utils import shuffle
 from skimage import exposure
 import numpy as np
+import tensorflow as tf
 
 X_train_grey = np.zeros((n_train, image_shape[0],  image_shape[1]))
 X_train_grey_clahe = np.zeros((n_train, image_shape[0],  image_shape[1]))
@@ -235,7 +236,7 @@ for i in range(n_train):
     X_train_grey[i] = cv2.cvtColor(X_train[i], cv2.COLOR_RGB2GRAY, 0)
     X_train_grey_clahe[i] = clahe.apply(
         cv2.cvtColor(X_train[i], cv2.COLOR_RGB2GRAY))
-    X_train_grey_norm[i] = (X_train_grey_clahe[i] / 255).astype(np.float32)
+    X_train_grey_norm[i] = (X_train_grey_clahe[i] / 255.0 - 0.5).astype(np.float32)
 
 print('Images Test')
 index = random.randint(0, n_train)
@@ -272,11 +273,12 @@ for i in range(n_validation):
         X_valid[i][:32], cv2.COLOR_RGB2GRAY), 0)
     X_valid_grey_clahe[i] = clahe.apply(
         cv2.cvtColor(X_valid[i], cv2.COLOR_RGB2GRAY))
-    X_valid_grey_norm[i] = (X_valid_grey_clahe[i] / 255).astype(np.float32)
+    X_valid_grey_norm[i] = (X_valid_grey_clahe[i] / 255.0 - 0.5).astype(np.float32)
 
 X_valid_grey_norm = X_valid_grey_norm.reshape(
-    n_validation, image_shape[0], image_shape[0], 1)
+    n_validation, image_shape[0], image_shape[1], 1)
 X_valid = X_valid_grey_norm
+
 
 image_shape = (image_shape[0], image_shape[1], 1)
 
@@ -287,90 +289,92 @@ image_shape = (image_shape[0], image_shape[1], 1)
 # plt.figure(figsize=(2,2))
 # plt.imshow(X_train[0][:32] )
 # plt.show()
-X_train, y_train = shuffle(X_train, y_train)
+# X_train, y_train = shuffle(X_train, y_train)
 # exit(1)
-import tensorflow as tf
+
 
 from tensorflow.contrib.layers import flatten
 
 
-def LeNet(x):
+def CDN(x):
     # Arguments used for tf.truncated_normal, randomly defines variables for the weights and biases for each layer
     mu = 0
     sigma = 0.1
 
-    # SOLUTION: Layer 1: Convolutional. Input = 32x32x1. Output = 28x28x6.
+    # SOLUTION: Layer 1: Convolutional. Input = 32x32x1. Output = 32x32x32.
     conv1_W = tf.Variable(tf.truncated_normal(
-        shape=(5, 5, image_shape[2], 32), mean=mu, stddev=sigma))
-    conv1_b = tf.Variable(tf.zeros(32))
+        shape=(5, 5, image_shape[2], 16), mean=mu, stddev=sigma))
+    conv1_b = tf.Variable(tf.zeros(16))
     conv1 = tf.nn.conv2d(x, conv1_W, strides=[
                          1, 1, 1, 1], padding='VALID') + conv1_b
 
     # SOLUTION: Activation.
-    conv1 = tf.nn.relu(conv1)
-    # conv1 = tf.nn.dropout(conv1, 0.5)
-    # SOLUTION: Pooling. Input = 28x28x6. Output = 14x14x6.
+    conv1 = tf.nn.tanh(conv1)
+    # conv1 = tf.nn.dropout(conv1, 0.8)
+    # SOLUTION: Pooling. Input = 32x32x32. Output = 16x16x32
     conv1 = tf.nn.max_pool(conv1, ksize=[1, 2, 2, 1], strides=[
                            1, 2, 2, 1], padding='VALID')
 
-    # SOLUTION: Layer 2: Convolutional. Output = 10x10x16.
+    # SOLUTION: Layer 2: Convolutional. Output = 16x16x64
     conv2_W = tf.Variable(tf.truncated_normal(
-        shape=(5, 5, 32, 64), mean=mu, stddev=sigma))
-    conv2_b = tf.Variable(tf.zeros(64))
+        shape=(5, 5, 16, 32), mean=mu, stddev=sigma))
+    conv2_b = tf.Variable(tf.zeros(32))
     conv2 = tf.nn.conv2d(conv1, conv2_W, strides=[
                          1, 1, 1, 1], padding='VALID') + conv2_b
 
     # SOLUTION: Activation.
-    conv2 = tf.nn.relu(conv2)
-    # conv2 = tf.nn.dropout(conv2, 0.5)
-    # SOLUTION: Pooling. Input = 10x10x16. Output = 5x5x16.
+    conv2 = tf.nn.tanh(conv2)
+    # conv2 = tf.nn.dropout(conv2, 0.8)
+    # SOLUTION: Pooling. Input = 116x16x64 Output = 8x8x64.
     conv2 = tf.nn.max_pool(conv2, ksize=[1, 2, 2, 1], strides=[
                            1, 2, 2, 1], padding='VALID')
 
-# SOLUTION: Layer 3: Convolutional. Output = 10x10x16.
+    # SOLUTION: Layer 3: Convolutional. Output = 8x8x128.
     conv3_W = tf.Variable(tf.truncated_normal(
-        shape=(5, 5, 64, 128), mean=mu, stddev=sigma))
-    conv3_b = tf.Variable(tf.zeros(128))
+        shape=(5, 5, 32, 64), mean=mu, stddev=sigma))
+    conv3_b = tf.Variable(tf.zeros(64))
     conv3 = tf.nn.conv2d(conv2, conv3_W, strides=[
                          1, 1, 1, 1], padding='SAME') + conv3_b
 
     # SOLUTION: Activation.
-    conv3 = tf.nn.relu(conv3)
-    # conv3 = tf.nn.dropout(conv3, 0.5)
-    # SOLUTION: Pooling. Input = 10x10x16. Output = 5x5x16.
-    conv3 = tf.nn.max_pool(conv3, ksize=[1, 2, 2, 1], strides=[
-                           1, 2, 2, 1], padding='SAME')
+    conv3 = tf.nn.tanh(conv3)
+#     conv3 = tf.nn.dropout(conv3, 0.5)
+    # SOLUTION: Pooling. Input = 8x8x128 Output = 4x4x128.
+    # conv3 = tf.nn.max_pool(conv3, ksize=[1, 2, 2, 1], strides=[
+    #    1, 2, 2, 1], padding='SAME')
 
-    # SOLUTION: Flatten. Input = 5x5x16. Output = 400.
+    # SOLUTION: Flatten.
     f1 = flatten(conv1)
     f2 = flatten(conv2)
     f3 = flatten(conv3)
 
     fc0 = tf.concat([f1, f2, f3], 1)
-
-    # SOLUTION: Layer 3: Fully Connected. Input = 400. Output = 120.
+    # fc0 = f1
+    # SOLUTION: Layer 3: Fully Connected. Input = 14336. Output = 3000.
     fc1_W = tf.Variable(tf.truncated_normal(
-        shape=(9024, 3000), mean=mu, stddev=sigma))
-    fc1_b = tf.Variable(tf.zeros(3000))
+        shape=(5536, 400), mean=mu, stddev=sigma))
+    fc1_b = tf.Variable(tf.zeros(400))
     fc1 = tf.matmul(fc0, fc1_W) + fc1_b
 
     # SOLUTION: Activation.
-    fc1 = tf.nn.relu(fc1)
-
-    fc1_1_W = tf.Variable(tf.truncated_normal(
-        shape=(3000, 400), mean=mu, stddev=sigma))
-    fc1_1_b = tf.Variable(tf.zeros(400))
-    fc1 = tf.matmul(fc1, fc1_1_W) + fc1_1_b
+    # fc1 = tf.nn.tanh(fc1)
+    # # fc1 = tf.nn.dropout(fc1, 0.8)
+    # fc1_1_W = tf.Variable(tf.truncated_normal(
+    #     shape=(4736, 1024), mean=mu, stddev=sigma))
+    # fc1_1_b = tf.Variable(tf.zeros(1024))
+    # fc1 = tf.matmul(fc1, fc1_1_W) + fc1_1_b
 
     # SOLUTION: Activation.
-    fc1 = tf.nn.relu(fc1)
+    fc1 = tf.nn.tanh(fc1)
+#     fc1 = tf.nn.dropout(fc1, 0.8)
     fc2_W = tf.Variable(tf.truncated_normal(
         shape=(400, 120), mean=mu, stddev=sigma))
     fc2_b = tf.Variable(tf.zeros(120))
     fc2 = tf.matmul(fc1, fc2_W) + fc2_b
 
     # SOLUTION: Activation.
-    fc2 = tf.nn.relu(fc2)
+    fc2 = tf.nn.tanh(fc2)
+    fc2 = tf.nn.dropout(fc2, 0.5)
     # SOLUTION: Layer 4: Fully Connected. Input = 120. Output = 84.
     fc3_W = tf.Variable(tf.truncated_normal(
         shape=(120, 84), mean=mu, stddev=sigma))
@@ -379,8 +383,114 @@ def LeNet(x):
 
     # SOLUTION: Activation.
     fc3 = tf.nn.relu(fc3)
-
+    fc3 = tf.nn.dropout(fc3, 0.5)
     # SOLUTION: Layer 5: Fully Connected. Input = 84. Output = 10.
+    fc4_W = tf.Variable(tf.truncated_normal(
+        shape=(84, n_classes), mean=mu, stddev=sigma))
+    fc4_b = tf.Variable(tf.zeros(n_classes))
+    logits = tf.matmul(fc3, fc4_W) + fc4_b
+
+    return logits
+
+
+def CDN2(x):
+    # Arguments used for tf.truncated_normal, randomly defines variables for the weights and biases for each layer
+    mu = 0
+    sigma = 0.1
+
+    # SOLUTION: Layer 1: Convolutional. Input = 32x32x1. Output = 28x28x32.
+    conv1_W = tf.Variable(tf.truncated_normal(
+        shape=(5, 5, image_shape[2], 32), mean=mu, stddev=sigma))
+    conv1_b = tf.Variable(tf.zeros(32))
+    conv1 = tf.nn.conv2d(x, conv1_W, strides=[
+                         1, 1, 1, 1], padding='VALID') + conv1_b
+
+    # SOLUTION: Activation.
+
+    conv1 = tf.nn.relu(conv1)
+    # conv1 = tf.nn.dropout(conv1, 0.5)
+    # SOLUTION: Pooling. Input = 28x28x32. Output = 14x14x32.
+    conv1 = tf.nn.max_pool(conv1, ksize=[1, 2, 2, 1], strides=[
+                           1, 2, 2, 1], padding='VALID')
+
+    # SOLUTION: Layer 2: Convolutional. Output = 10x10x64.
+    conv2_W = tf.Variable(tf.truncated_normal(
+        shape=(5, 5, 32, 64), mean=mu, stddev=sigma))
+    conv2_b = tf.Variable(tf.zeros(64))
+    conv2 = tf.nn.conv2d(conv1, conv2_W, strides=[
+                         1, 1, 1, 1], padding='VALID') + conv2_b
+
+    # SOLUTION: Activation.
+
+    conv2 = tf.nn.relu(conv2)
+    # conv2 = tf.nn.dropout(conv2, 0.5)
+    # SOLUTION: Pooling. Input = 10x10x64. Output = 5x5x64.
+    conv2 = tf.nn.max_pool(conv2, ksize=[1, 2, 2, 1], strides=[
+                           1, 2, 2, 1], padding='VALID')
+
+    # SOLUTION: Layer 3: Convolutional. Output = 5x5x128.
+    conv3_W = tf.Variable(tf.truncated_normal(
+        shape=(5, 5, 64, 128), mean=mu, stddev=sigma))
+    conv3_b = tf.Variable(tf.zeros(128))
+    conv3 = tf.nn.conv2d(conv2, conv3_W, strides=[
+                         1, 1, 1, 1], padding='SAME') + conv3_b
+
+    # SOLUTION: Activation.
+
+    conv3 = tf.nn.relu(conv3)
+    # conv3 = tf.nn.dropout(conv3, 0.5)
+    # SOLUTION: Pooling. Input = 5x5x128. Output = 3x3x128.
+    conv3 = tf.nn.max_pool(conv3, ksize=[1, 2, 2, 1], strides=[
+                           1, 2, 2, 1], padding='SAME')
+
+    # SOLUTION: Flatten. Input = (14*14*32)+(5*5*64)+(3*3*128). Output = 9024.
+    f1 = flatten(conv1)
+    f2 = flatten(conv2)
+    f3 = flatten(conv3)
+
+    fc0 = tf.concat([f1, f2, f3], 1)
+    # fc0 = f3
+    # SOLUTION:Fully Connected. Input = 9024. Output = 3000.
+    fc1_W = tf.Variable(tf.truncated_normal(
+        shape=(9024, 3000), mean=mu, stddev=sigma))
+    fc1_b = tf.Variable(tf.zeros(3000))
+    fc1 = tf.matmul(fc0, fc1_W) + fc1_b
+
+    # SOLUTION: Activation.
+    fc1 = tf.nn.dropout(fc1, 0.6)
+    fc1 = tf.nn.relu(fc1)
+
+    # SOLUTION: Fully Connected. Input = 3000. Output = 400.
+    fc1_1_W = tf.Variable(tf.truncated_normal(
+        shape=(3000, 400), mean=mu, stddev=sigma))
+    fc1_1_b = tf.Variable(tf.zeros(400))
+    fc1 = tf.matmul(fc1, fc1_1_W) + fc1_1_b
+
+    # SOLUTION: Activation.
+    fc1 = tf.nn.dropout(fc1, 0.6
+    )
+    fc1 = tf.nn.relu(fc1)
+
+    # SOLUTION: Fully Connected. Input = 400. Output = 120.
+    fc2_W = tf.Variable(tf.truncated_normal(
+        shape=(400, 120), mean=mu, stddev=sigma))
+    fc2_b = tf.Variable(tf.zeros(120))
+    fc2 = tf.matmul(fc1, fc2_W) + fc2_b
+
+    # SOLUTION: Activation.
+    fc2 = tf.nn.dropout(fc2, 0.8)
+    fc2 = tf.nn.relu(fc2)
+    # SOLUTION: Fully Connected. Input = 120. Output = 84.
+    fc3_W = tf.Variable(tf.truncated_normal(
+        shape=(120, 84), mean=mu, stddev=sigma))
+    fc3_b = tf.Variable(tf.zeros(84))
+    fc3 = tf.matmul(fc2, fc3_W) + fc3_b
+
+    # SOLUTION: Activation.
+    fc3 = tf.nn.dropout(fc3, 0.8)
+    fc3 = tf.nn.relu(fc3)
+
+    # SOLUTION: Layer 5: Fully Connected. Input = 84. Output = 43.
     fc4_W = tf.Variable(tf.truncated_normal(
         shape=(84, n_classes), mean=mu, stddev=sigma))
     fc4_b = tf.Variable(tf.zeros(n_classes))
@@ -399,7 +509,7 @@ BATCH_SIZE = 128
 
 rate = 0.001
 
-logits = LeNet(x)
+logits = CDN2(x)
 cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(
     labels=one_hot_y, logits=logits)
 loss_operation = tf.reduce_mean(cross_entropy)
@@ -437,16 +547,12 @@ with tf.Session() as sess:
             batch_x, batch_y = X_train[offset:end], y_train[offset:end]
             sess.run(training_operation, feed_dict={x: batch_x, y: batch_y})
 
-        validation_accuracy = evaluate(X_valid, y_valid)
+        train_accuracy = evaluate(X_train, y_train)
         print("EPOCH {} ...".format(i+1))
+        print("Train Accuracy = {:.3f}".format(train_accuracy))
+        validation_accuracy = evaluate(X_valid, y_valid)
         print("Validation Accuracy = {:.3f}".format(validation_accuracy))
         print()
 
     saver.save(sess, './trafficSignModel02')
     print("Model saved")
-
-with tf.Session() as sess:
-    saver.restore(sess, tf.train.latest_checkpoint('.'))
-
-    test_accuracy = evaluate(X_test, y_test)
-    print("Test Accuracy = {:.3f}".format(test_accuracy))
